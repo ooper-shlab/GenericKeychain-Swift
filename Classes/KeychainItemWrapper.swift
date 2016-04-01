@@ -214,13 +214,13 @@ class KeychainItemWrapper: NSObject {
         return returnDictionary
     }
     
-    private func secItemFormatToDictionary(var dictionaryToConvert: NSDictionary?) -> NSMutableDictionary {
+    private func secItemFormatToDictionary(_dictionaryToConvert: NSDictionary?) -> NSMutableDictionary {
         // The assumption is that this method will be called with a properly populated dictionary
         // containing all the right key/value pairs for the UI element.
         
         // Create a dictionary to return populated with the attributes and data.
-        if dictionaryToConvert == nil { dictionaryToConvert = NSDictionary() }
-        let returnDictionary = NSMutableDictionary(dictionary: dictionaryToConvert!)
+        let dictionaryToConvert = _dictionaryToConvert ?? NSDictionary()
+        let returnDictionary = NSMutableDictionary(dictionary: dictionaryToConvert)
         
         // Add the proper search key and class attribute.
         returnDictionary[kSecReturnData as NSString] = kCFBooleanTrue

@@ -248,7 +248,7 @@ class DetailViewController:  UIViewController, UITableViewDataSource, UITableVie
                 cell!.selectionStyle = .None
                 
                 let switchCtl = UISwitch(frame: CGRectMake(194, 8, 94, 27))
-                switchCtl.addTarget(self, action: "switchAction:", forControlEvents: .ValueChanged)
+                switchCtl.addTarget(self, action: #selector(DetailViewController.switchAction(_:)), forControlEvents: .ValueChanged)
                 cell!.contentView.addSubview(switchCtl)
             }
             
