@@ -65,8 +65,9 @@ CF/NS container objects.
 */
 @objc(KeychainItemWrapper)
 class KeychainItemWrapper: NSObject {
-    var keychainItemData: NSMutableDictionary!		// The actual keychain item data backing store.
-    var genericPasswordQuery = NSMutableDictionary()	// A placeholder for the generic keychain item query used to locate the item.
+    typealias SecDictType = [NSObject: AnyObject]
+    var keychainItemData: SecDictType!		// The actual keychain item data backing store.
+    var genericPasswordQuery: SecDictType = [:]	// A placeholder for the generic keychain item query used to locate the item.
     
     /*
     
@@ -104,8 +105,8 @@ class KeychainItemWrapper: NSObject {
         // defined attribute kSecAttrGeneric to distinguish itself between other generic Keychain
         // items which may be included by the same application.
         
-        genericPasswordQuery[kSecClass as NSString] = kSecClassGenericPassword
-        genericPasswordQuery[kSecAttrGeneric as NSString] = identifier
+        genericPasswordQuery[kSecClass] = kSecClassGenericPassword
+        genericPasswordQuery[kSecAttrGeneric] = identifier as NSString
         
         // The keychain access group attribute determines if this item can be shared
         // amongst multiple apps whose code signing entitlements contain the same keychain access group.
@@ -120,25 +121,25 @@ class KeychainItemWrapper: NSObject {
                 // If a SecItem contains an access group attribute, SecItemAdd and SecItemUpdate on the
                 // simulator will return -25243 (errSecNoAccessForItem).
             #else
-                genericPasswordQuery[kSecAttrAccessGroup as NSString] = accessGroup
+                genericPasswordQuery[kSecAttrAccessGroup] = accessGroup as AnyObject?
             #endif
         }
         
         // Use the proper search constants, return only the attributes of the first match.
-        genericPasswordQuery[kSecMatchLimit as NSString] = kSecMatchLimitOne
-        genericPasswordQuery[kSecReturnAttributes as NSString] = kCFBooleanTrue
+        genericPasswordQuery[kSecMatchLimit] = kSecMatchLimitOne
+        genericPasswordQuery[kSecReturnAttributes] = kCFBooleanTrue
         
-        let tempQuery = NSDictionary(dictionary: genericPasswordQuery)
+        let tempQuery = genericPasswordQuery
         
         var outCFDictionary: AnyObject?
-        var outDictionary: NSDictionary?
+        var outDictionary: SecDictType?
         
-        if SecItemCopyMatching(tempQuery, &outCFDictionary) != noErr {
+        if SecItemCopyMatching(tempQuery as CFDictionary, &outCFDictionary) != noErr {
             // Stick these default values into keychain item if nothing found.
             self.resetKeychainItem()
             
             // Add the generic attribute and the keychain access group.
-            keychainItemData[kSecAttrGeneric as NSString] = identifier
+            keychainItemData[kSecAttrGeneric] = identifier as AnyObject?
             if accessGroup != nil {
                 #if arch(i386) || arch(x86_64)
                     // Ignore the access group if running on the iPhone simulator.
@@ -150,11 +151,11 @@ class KeychainItemWrapper: NSObject {
                     // If a SecItem contains an access group attribute, SecItemAdd and SecItemUpdate on the
                     // simulator will return -25243 (errSecNoAccessForItem).
                 #else
-                    keychainItemData[kSecAttrAccessGroup as NSString] = accessGroup
+                    keychainItemData[kSecAttrAccessGroup as NSString] = accessGroup as AnyObject?
                 #endif
             }
         } else {
-            outDictionary = (outCFDictionary as! NSMutableDictionary?)
+            outDictionary = (outCFDictionary as! SecDictType?)
             // load the saved data from Keychain.
             self.keychainItemData = self.secItemFormatToDictionary(outDictionary)
         }
@@ -162,81 +163,81 @@ class KeychainItemWrapper: NSObject {
     }
     
     
-    func setObject(inObject: AnyObject?, forKey key: NSCopying) {
+    func setObject(_ inObject: AnyObject?, forKey key: String) {
         if inObject != nil {
-            let currentObject: AnyObject? = keychainItemData[key]
+            let currentObject: AnyObject? = keychainItemData[key as NSString]
             if currentObject !== inObject {
-                keychainItemData[key] = inObject
+                keychainItemData[key as NSString] = inObject
                 self.writeToKeychain()
             }
         }
     }
     
-    func objectForKey(key: NSCopying) -> AnyObject? {
-        return keychainItemData[key]
+    func objectForKey(_ key: String) -> AnyObject? {
+        return keychainItemData[key as NSString]
     }
     
     // Initializes and resets the default generic keychain item data.
     func resetKeychainItem() {
         var junk = noErr
         if keychainItemData == nil {
-            self.keychainItemData = NSMutableDictionary()
+            self.keychainItemData = [:]
         } else if keychainItemData != nil {
             let tempDictionary = self.dictionaryToSecItemFormat(keychainItemData)
-            junk = SecItemDelete(tempDictionary)
+            junk = SecItemDelete(tempDictionary as CFDictionary)
             assert(junk == noErr || junk == errSecItemNotFound, "Problem deleting current dictionary.")
         }
         
         // Default attributes for keychain item.
-        keychainItemData[kSecAttrAccount as NSString] = ""
-        keychainItemData[kSecAttrLabel as NSString] = ""
-        keychainItemData[kSecAttrDescription as NSString] = ""
+        keychainItemData[kSecAttrAccount] = "" as AnyObject?
+        keychainItemData[kSecAttrLabel] = "" as AnyObject?
+        keychainItemData[kSecAttrDescription] = "" as AnyObject?
         
         // Default data for keychain item.
-        keychainItemData[kSecValueData as NSString] = ""
+        keychainItemData[kSecValueData] = "" as AnyObject?
     }
     
-    private func dictionaryToSecItemFormat(dictionaryToConvert: NSDictionary) -> NSMutableDictionary {
+    fileprivate func dictionaryToSecItemFormat(_ dictionaryToConvert: SecDictType) -> SecDictType {
         // The assumption is that this method will be called with a properly populated dictionary
         // containing all the right key/value pairs for a SecItem.
         
         // Create a dictionary to return populated with the attributes and data.
-        let returnDictionary = NSMutableDictionary(dictionary: dictionaryToConvert)
+        var returnDictionary = dictionaryToConvert
         
         // Add the Generic Password keychain item class attribute.
-        returnDictionary[kSecClass as NSString] = kSecClassGenericPassword
+        returnDictionary[kSecClass] = kSecClassGenericPassword
         
         // Convert the NSString to NSData to meet the requirements for the value type kSecValueData.
         // This is where to store sensitive data that should be encrypted.
-        let passwordString = dictionaryToConvert[kSecValueData as NSString] as! String?
-        returnDictionary[kSecValueData as NSString] = passwordString?.dataUsingEncoding(NSUTF8StringEncoding)
+        let passwordString = dictionaryToConvert[kSecValueData] as! String?
+        returnDictionary[kSecValueData] = passwordString?.data(using: String.Encoding.utf8) as AnyObject?
         
         return returnDictionary
     }
     
-    private func secItemFormatToDictionary(_dictionaryToConvert: NSDictionary?) -> NSMutableDictionary {
+    fileprivate func secItemFormatToDictionary(_ _dictionaryToConvert: SecDictType?) -> SecDictType {
         // The assumption is that this method will be called with a properly populated dictionary
         // containing all the right key/value pairs for the UI element.
         
         // Create a dictionary to return populated with the attributes and data.
-        let dictionaryToConvert = _dictionaryToConvert ?? NSDictionary()
-        let returnDictionary = NSMutableDictionary(dictionary: dictionaryToConvert)
+        let dictionaryToConvert = _dictionaryToConvert ?? [:]
+        var returnDictionary = dictionaryToConvert
         
         // Add the proper search key and class attribute.
-        returnDictionary[kSecReturnData as NSString] = kCFBooleanTrue
-        returnDictionary[kSecClass as NSString] = kSecClassGenericPassword
+        returnDictionary[kSecReturnData] = kCFBooleanTrue as AnyObject
+        returnDictionary[kSecClass] = kSecClassGenericPassword
         
         // Acquire the password data from the attributes.
         var passwordCFData: AnyObject?
-        var passwordData: NSData?
-        if SecItemCopyMatching(returnDictionary, &passwordCFData) == noErr {
-            passwordData = (passwordCFData as! NSData?)
+        var passwordData: Data?
+        if SecItemCopyMatching(returnDictionary as CFDictionary, &passwordCFData) == noErr {
+            passwordData = (passwordCFData as! Data?)
             // Remove the search, class, and identifier key/value, we don't need them anymore.
-            returnDictionary.removeObjectForKey(kSecReturnData)
+            returnDictionary.removeValue(forKey: kSecReturnData)
             
             // Add the password to the dictionary, converting from NSData to NSString.
-            let password = NSString(bytes: passwordData!.bytes, length: passwordData!.length,
-                encoding: NSUTF8StringEncoding)
+            let password = NSString(bytes: (passwordData! as NSData).bytes, length: passwordData!.count,
+                encoding: String.Encoding.utf8.rawValue)
             returnDictionary[kSecValueData as NSString] = password
         } else {
             // Don't do anything if nothing is found.
@@ -248,22 +249,19 @@ class KeychainItemWrapper: NSObject {
     }
     
     // Updates the item in the keychain, or adds it if it doesn't exist.
-    private func writeToKeychain() {
+    fileprivate func writeToKeychain() {
         var cfAttributes: AnyObject?
-        var attributes: NSDictionary?
         var result: OSStatus = noErr
         
-        if SecItemCopyMatching(genericPasswordQuery, &cfAttributes) == noErr {
-            attributes = cfAttributes as! NSDictionary?
+        if SecItemCopyMatching(genericPasswordQuery as CFDictionary, &cfAttributes) == noErr {
             // First we need the attributes from the Keychain.
-            if attributes == nil { attributes = NSDictionary() }
-            let updateItem: NSMutableDictionary = NSMutableDictionary(dictionary: attributes!)
+            var updateItem = cfAttributes as! SecDictType? ?? [:]
             // Second we need to add the appropriate search key/values.
-            updateItem[kSecClass as NSString] = genericPasswordQuery[kSecClass as NSString]
+            updateItem[kSecClass] = genericPasswordQuery[kSecClass]
             
             // Lastly, we need to set up the updated attribute list being careful to remove the class.
-            let tempCheck = self.dictionaryToSecItemFormat(keychainItemData)
-            tempCheck.removeObjectForKey(kSecClass)
+            var tempCheck = self.dictionaryToSecItemFormat(keychainItemData)
+            tempCheck.removeValue(forKey: kSecClass)
             
             #if arch(i386) || arch(x86_64)
                 // Remove the access group if running on the iPhone simulator.
@@ -277,16 +275,16 @@ class KeychainItemWrapper: NSObject {
                 //
                 // The access group attribute will be included in items returned by SecItemCopyMatching,
                 // which is why we need to remove it before updating the item.
-                tempCheck.removeObjectForKey(kSecAttrAccessGroup)
+                tempCheck.removeValue(forKey: kSecAttrAccessGroup)
             #endif
             
             // An implicit assumption is that you can only update a single item at a time.
             
-            result = SecItemUpdate(updateItem, tempCheck)
+            result = SecItemUpdate(updateItem as CFDictionary, tempCheck as CFDictionary)
             assert(result == noErr, "Couldn't update the Keychain Item.")
         } else {
             // No previous item found; add the new one.
-            result = SecItemAdd(self.dictionaryToSecItemFormat(keychainItemData), nil)
+            result = SecItemAdd(self.dictionaryToSecItemFormat(keychainItemData) as CFDictionary, nil)
             assert(result == noErr, "Couldn't add the Keychain Item.")
         }
     }

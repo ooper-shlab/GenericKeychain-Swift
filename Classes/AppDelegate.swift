@@ -69,12 +69,12 @@ class AppDelegate: NSObject, UIApplicationDelegate {
     @IBOutlet var accountNumberItem: KeychainItemWrapper!
     
     
-    func applicationDidFinishLaunching(application: UIApplication) {
+    func applicationDidFinishLaunching(_ application: UIApplication) {
         var wrapper = KeychainItemWrapper(identifier: "Password", accessGroup: nil)
         self.passwordItem = wrapper
         detailViewController.passwordItem = wrapper
         
-        let appIdentifierPrefix = NSBundle.mainBundle().objectForInfoDictionaryKey("AppIdentifierPrefix") as! String
+        let appIdentifierPrefix = Bundle.main.object(forInfoDictionaryKey: "AppIdentifierPrefix") as! String
         print("appIdentifierPrefix=\(appIdentifierPrefix)")
         wrapper = KeychainItemWrapper(identifier: "Account Number", accessGroup: "\(appIdentifierPrefix)com.yourcompany.GenericKeychainSuite")
         self.accountNumberItem = wrapper

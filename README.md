@@ -14,11 +14,11 @@ You should not contact to Apple or SHLab(jp) about any faults caused by my trans
 ===========================================================================
 BUILD REQUIREMENTS:
 
-Xcode 7.3, iOS 9.3 SDK
+Xcode 8 GM seed, iOS 10 SDK
 
 ===========================================================================
 RUNTIME REQUIREMENTS:
 
-iOS 7 or later
+iOS 8 or later
 
 ===========================================================================

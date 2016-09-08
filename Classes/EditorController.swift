@@ -68,30 +68,30 @@ class EditorController: UIViewController {
     
     
     override func awakeFromNib() {
-        self.view.backgroundColor = UIColor.groupTableViewBackgroundColor()
-        textControl.font = UIFont.boldSystemFontOfSize(16.0)
+        self.view.backgroundColor = UIColor.groupTableViewBackground
+        textControl.font = UIFont.boldSystemFont(ofSize: 16.0)
     }
     
-    override func shouldAutorotate() -> Bool {
+    override var shouldAutorotate : Bool {
         return false
     }
-    override func supportedInterfaceOrientations() -> UIInterfaceOrientationMask {
+    override var supportedInterfaceOrientations : UIInterfaceOrientationMask {
         // Return YES for supported orientations
-        return UIInterfaceOrientationMask.Portrait
+        return UIInterfaceOrientationMask.portrait
     }
     
     @IBAction func cancel(_: AnyObject) {
         // cancel edits
-        self.navigationController!.popToRootViewControllerAnimated(true)
+        self.navigationController!.popToRootViewController(animated: true)
     }
     
     @IBAction func save(_: AnyObject) {
         // save edits
-        keychainItemWrapper.setObject(textControl.text, forKey: editedFieldKey!)
-        self.navigationController!.popViewControllerAnimated(true)
+        keychainItemWrapper.setObject(textControl.text as AnyObject?, forKey: editedFieldKey!)
+        self.navigationController!.popViewController(animated: true)
     }
     
-    override func viewDidAppear(animated: Bool) {
+    override func viewDidAppear(_ animated: Bool) {
         textControl.becomeFirstResponder()
         textControl.text = textValue
     }

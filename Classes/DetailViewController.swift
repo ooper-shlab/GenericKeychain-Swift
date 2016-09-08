@@ -74,7 +74,7 @@ class DetailViewController:  UIViewController, UITableViewDataSource, UITableVie
     // Defined UI constants.
     private let kPasswordTag	= 2	// Tag table view cells that contain a text field to support secure text entry.
     
-    class func titleForSection(section: Int) -> String? {
+    class func titleForSection(_ section: Int) -> String? {
         switch section {
         case kUsernameSection: return NSLocalizedString("Username", comment: "")
         case kPasswordSection: return NSLocalizedString("Password", comment: "")
@@ -84,7 +84,7 @@ class DetailViewController:  UIViewController, UITableViewDataSource, UITableVie
         }
     }
     
-    class func secAttrForSection(section: Int) -> String? {
+    class func secAttrForSection(_ section: Int) -> String? {
         switch section {
         case kUsernameSection: return kSecAttrAccount as String
         case kPasswordSection: return kSecValueData as String
@@ -94,7 +94,7 @@ class DetailViewController:  UIViewController, UITableViewDataSource, UITableVie
         }
     }
     
-    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: NSBundle?) {
+    override init(nibName nibNameOrNil: String?, bundle nibBundleOrNil: Bundle?) {
         super.init(nibName: nibNameOrNil, bundle: nibBundleOrNil)
         // Title displayed by the navigation controller.
         self.title = "Keychain"
@@ -106,27 +106,27 @@ class DetailViewController:  UIViewController, UITableViewDataSource, UITableVie
     
     
     override func awakeFromNib() {
-        self.navigationItem.rightBarButtonItem = self.editButtonItem()
-        self.view.backgroundColor = UIColor.groupTableViewBackgroundColor()
+        self.navigationItem.rightBarButtonItem = self.editButtonItem
+        self.view.backgroundColor = UIColor.groupTableViewBackground
     }
     
-    func switchAction(sender: UISwitch) {
-        var cell = self.tableView.cellForRowAtIndexPath(
-            NSIndexPath(forRow: 0, inSection: kPasswordSection))
+    func switchAction(_ sender: UISwitch) {
+        var cell = self.tableView.cellForRow(
+            at: IndexPath(row: 0, section: kPasswordSection))
         var textField = cell!.contentView.viewWithTag(kPasswordTag) as! UITextField
-        textField.secureTextEntry = !sender.on
+        textField.isSecureTextEntry = !sender.isOn
         
-        cell = self.tableView.cellForRowAtIndexPath(
-            NSIndexPath(forRow: 0, inSection: kAccountNumberSection))
+        cell = self.tableView.cellForRow(
+            at: IndexPath(row: 0, section: kAccountNumberSection))
         textField = cell!.contentView.viewWithTag(kPasswordTag) as! UITextField
-        textField.secureTextEntry = !sender.on
+        textField.isSecureTextEntry = !sender.isOn
     }
     
     // Action sheet delegate method.
-    func actionSheet(actionSheet: UIActionSheet, clickedButtonAtIndex buttonIndex: Int) {
+    func actionSheet(_ actionSheet: UIActionSheet, clickedButtonAt buttonIndex: Int) {
         self.actionSheetClickedButtonAtIndex(buttonIndex)
     }
-    func actionSheetClickedButtonAtIndex(buttonIndex: Int) {
+    func actionSheetClickedButtonAtIndex(_ buttonIndex: Int) {
         // the user clicked one of the OK/Cancel buttons
         if buttonIndex == 0 {
             passwordItem?.resetKeychainItem()
@@ -138,28 +138,28 @@ class DetailViewController:  UIViewController, UITableViewDataSource, UITableVie
     @IBAction func resetKeychain(_: AnyObject) {
         // open a dialog with an OK and cancel button
         if #available(iOS 8.0, *) {
-            let alert = UIAlertController(title: nil, message: "Reset Generic Keychain Item?", preferredStyle: .Alert)
-            alert.addAction(UIAlertAction(title: "OK", style: .Destructive, handler: {
+            let alert = UIAlertController(title: nil, message: "Reset Generic Keychain Item?", preferredStyle: .alert)
+            alert.addAction(UIAlertAction(title: "OK", style: .destructive, handler: {
                 _ in self.actionSheetClickedButtonAtIndex(0)
             }))
-            alert.addAction(UIAlertAction(title: "Cancel", style: .Cancel, handler: {
+            alert.addAction(UIAlertAction(title: "Cancel", style: .cancel, handler: {
                 _ in self.actionSheetClickedButtonAtIndex(1)
             }))
-            self.presentViewController(alert, animated: true, completion: nil)
+            self.present(alert, animated: true, completion: nil)
         } else {
             let actionSheet = UIActionSheet(title: "Reset Generic Keychain Item?",
                 delegate: self, cancelButtonTitle: "Cancel", destructiveButtonTitle: "OK")
-            actionSheet.actionSheetStyle = .Default
-            actionSheet.showInView(self.view)
+            actionSheet.actionSheetStyle = .default
+            actionSheet.show(in: self.view)
         }
     }
     
-    override func viewWillAppear(animated: Bool) {
+    override func viewWillAppear(_ animated: Bool) {
         super.viewWillAppear(animated)
         tableView.reloadData()
     }
     
-    override func setEditing(editing: Bool, animated: Bool) {
+    override func setEditing(_ editing: Bool, animated: Bool) {
         super.setEditing(editing, animated: animated)
         tableView.reloadData()
     }
@@ -167,25 +167,25 @@ class DetailViewController:  UIViewController, UITableViewDataSource, UITableVie
     //MARK: -
     //MARK: <UITableViewDelegate, UITableViewDataSource> Methods
     
-    func numberOfSectionsInTableView(tableView: UITableView) -> Int {
+    func numberOfSections(in tableView: UITableView) -> Int {
         // 4 sections, one for each property and one for the switch
         return 4
     }
     
-    func tableView(tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
         // Only one row for each section
         return 1
     }
     
-    func tableView(tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
+    func tableView(_ tableView: UITableView, heightForFooterInSection section: Int) -> CGFloat {
         return (section == kAccountNumberSection) ? 48.0 : 0.0
     }
     
-    func tableView(tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
+    func tableView(_ tableView: UITableView, titleForHeaderInSection section: Int) -> String? {
         return DetailViewController.titleForSection(section)
     }
     
-    func tableView(tableView: UITableView, titleForFooterInSection section: Int) -> String? {
+    func tableView(_ tableView: UITableView, titleForFooterInSection section: Int) -> String? {
         var title: String? = nil
         
         if section == kAccountNumberSection {
@@ -196,7 +196,7 @@ class DetailViewController:  UIViewController, UITableViewDataSource, UITableVie
     }
     
     // Customize the appearance of table view cells.
-    func tableView(aTableView: UITableView, cellForRowAtIndexPath indexPath: NSIndexPath) -> UITableViewCell {
+    func tableView(_ aTableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
         let kUsernameCellIdentifier =	"UsernameCell"
         let kPasswordCellIdentifier =	"PasswordCell"
         let kSwitchCellIdentifier =	"SwitchCell"
@@ -205,30 +205,30 @@ class DetailViewController:  UIViewController, UITableViewDataSource, UITableVie
         
         switch indexPath.section {
         case kUsernameSection:
-            cell = aTableView.dequeueReusableCellWithIdentifier(kUsernameCellIdentifier)
+            cell = aTableView.dequeueReusableCell(withIdentifier: kUsernameCellIdentifier)
             if cell == nil {
-                cell = UITableViewCell(style: .Default, reuseIdentifier: kUsernameCellIdentifier)
+                cell = UITableViewCell(style: .default, reuseIdentifier: kUsernameCellIdentifier)
             }
             
             cell!.textLabel!.text = passwordItem?.objectForKey(DetailViewController.secAttrForSection(indexPath.section)!) as! String?
-            cell!.accessoryType = self.editing ? .DisclosureIndicator : .None
+            cell!.accessoryType = self.isEditing ? .disclosureIndicator : .none
             
         case kPasswordSection, kAccountNumberSection:
             let textField: UITextField
             
-            cell = aTableView.dequeueReusableCellWithIdentifier(kPasswordCellIdentifier)
+            cell = aTableView.dequeueReusableCell(withIdentifier: kPasswordCellIdentifier)
             if cell == nil {
-                cell = UITableViewCell(style: .Default, reuseIdentifier: kPasswordCellIdentifier)
+                cell = UITableViewCell(style: .default, reuseIdentifier: kPasswordCellIdentifier)
                 
-                textField = UITextField(frame: CGRectInset(cell!.contentView.bounds, 10, 10))
+                textField = UITextField(frame: cell!.contentView.bounds.insetBy(dx: 10, dy: 10))
                 textField.tag = kPasswordTag
-                textField.font = UIFont.systemFontOfSize(17.0)
+                textField.font = UIFont.systemFont(ofSize: 17.0)
                 
                 // prevent editing
-                textField.enabled = false
+                textField.isEnabled = false
                 
                 // display contents as bullets rather than text
-                textField.secureTextEntry = true
+                textField.isSecureTextEntry = true
                 
                 cell!.contentView.addSubview(textField)
             } else {
@@ -237,18 +237,18 @@ class DetailViewController:  UIViewController, UITableViewDataSource, UITableVie
             
             let wrapper = (indexPath.section == kPasswordSection) ? passwordItem : accountNumberItem
             textField.text = wrapper!.objectForKey(DetailViewController.secAttrForSection(indexPath.section)!) as! String?
-            cell!.accessoryType = self.editing ? .DisclosureIndicator : .None
+            cell!.accessoryType = self.isEditing ? .disclosureIndicator : .none
             
         case kShowCleartextSection:
-            cell = aTableView.dequeueReusableCellWithIdentifier(kSwitchCellIdentifier)
+            cell = aTableView.dequeueReusableCell(withIdentifier: kSwitchCellIdentifier)
             if cell == nil {
-                cell = UITableViewCell(style: .Default, reuseIdentifier: kSwitchCellIdentifier)
+                cell = UITableViewCell(style: .default, reuseIdentifier: kSwitchCellIdentifier)
                 
                 cell!.textLabel!.text = NSLocalizedString("Show Cleartext", comment: "")
-                cell!.selectionStyle = .None
+                cell!.selectionStyle = .none
                 
-                let switchCtl = UISwitch(frame: CGRectMake(194, 8, 94, 27))
-                switchCtl.addTarget(self, action: #selector(DetailViewController.switchAction(_:)), forControlEvents: .ValueChanged)
+                let switchCtl = UISwitch(frame: CGRect(x: 194, y: 8, width: 94, height: 27))
+                switchCtl.addTarget(self, action: #selector(DetailViewController.switchAction(_:)), for: .valueChanged)
                 cell!.contentView.addSubview(switchCtl)
             }
             
@@ -260,12 +260,12 @@ class DetailViewController:  UIViewController, UITableViewDataSource, UITableVie
     }
     
     
-    func tableView(tableView: UITableView, didSelectRowAtIndexPath indexPath: NSIndexPath) {
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
         if indexPath.section != kShowCleartextSection {
-            tableView.deselectRowAtIndexPath(indexPath, animated: true)
+            tableView.deselectRow(at: indexPath, animated: true)
             let secAttr = DetailViewController.secAttrForSection(indexPath.section)!
             textFieldController.textControl.placeholder = DetailViewController.titleForSection(indexPath.section)
-            textFieldController.textControl.secureTextEntry = (indexPath.section == kPasswordSection || indexPath.section == kAccountNumberSection)
+            textFieldController.textControl.isSecureTextEntry = (indexPath.section == kPasswordSection || indexPath.section == kAccountNumberSection)
             if (indexPath.section == kUsernameSection || indexPath.section == kPasswordSection) {
                 textFieldController.keychainItemWrapper = passwordItem
             } else {
